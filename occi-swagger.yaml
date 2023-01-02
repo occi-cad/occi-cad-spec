@@ -108,7 +108,7 @@ paths:
                    $ref: '#/components/schemas/Cadscript'
             application/html:
               schema:
-                $ref: '/components/schemas/HtmlListing' 
+                $ref: '#/components/schemas/HtmlListing' 
         '400':
           description: Invalid request, if at least one query parameter is not  supplied, OR if any of the parameters are invalid.
           content:
