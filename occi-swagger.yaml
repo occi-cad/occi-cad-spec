@@ -1,0 +1,904 @@
+openapi: 3.0.3
+info:
+  title: OCCI - v 0.1
+  description: |-
+    This is version 1 of the OCCI server api specification
+    An OCCI server provides custom-created CAD components
+    to clients.
+    
+    A typical OCCI server will cache generated components, 
+    to provide faster response. An OCCI server should use an OCCI-compliant repository for this cache,
+    to maximize portability.
+    
+    OCCI servers use three fields in combination to uniquely identify source scripts:
+      - organization ( typically a top level domain name, author, or organization name)
+      - name ( a simple string with no reserved characters)
+      - version ( a semver compliant string)
+    
+    Togther, these are referred to as 'script coordinates". 
+    
+    Once we have a source script, we can perform a number of actions: 
+    
+       - list and manage components available that were produced by the script
+       - request new components to be generated, both syncrhonously and asynchronously
+       
+  contact:
+    email: dave.cowden@gmail.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: "0.1"
+security: 
+  -  BearerAuth: [ read ]
+paths:
+  /cadscripts:
+    get:
+      summary: Lists all cadscripts available on this server
+      responses:
+        '200':
+          description: a list of cadscripts. Html returns a browsable list of links for humans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                   $ref: '#/components/schemas/Cadscript'
+            application/html:
+              schema:
+                $ref: '#/components/schemas/Htmllisting'
+    post:
+      summary: Add a new cadscript to the server
+      security:
+        - BearerAuth: [ write ]
+      requestBody:
+        description: The new cadscript to add
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Cadscript'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cadscript'
+        '401':
+          description: Not Authorized. If apikey is not provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'  
+        '400':
+          description: Invalid script data provided. ( for example missing fields)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'                   
+  /cadscripts/search:
+    get:
+      summary: Search for cadscripts on this server
+      parameters:
+        - in: query
+          name: q_org
+          schema:
+            $ref: "#/components/schemas/CadScriptOrg"
+          required: false
+
+        - in : query
+          name: q_scriptname
+          schema:
+             $ref: "#/components/schemas/CadScriptName"
+          required: false
+          description: Name to match. Glob style wildcards accepted (** and * )
+        - in : query
+          name: q_version
+          required: false
+          schema:
+            $ref: "#/components/schemas/CadScriptVersion"
+          description: Semver version reference. Use semver syntax to select versions
+      responses:
+        '200':
+          description: a list of cadscripts. Html returns a browsable list of links for humans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                   $ref: '#/components/schemas/Cadscript'
+            application/html:
+              schema:
+                $ref: '/components/schemas/HtmlListing' 
+        '400':
+          description: Invalid request, if at least one query parameter is not  supplied, OR if any of the parameters are invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'   
+                
+  /cadscripts/{org}/{cadscript_name}: 
+    get:
+      summary: List all versions of the provided cadscript
+      description: This will return all of the metadata available, including paraemters, executors, and source
+      parameters:
+        - in: path
+          name: org
+          description: organization. typically, top level domain
+          schema:
+            $ref: "#/components/schemas/CadScriptOrg"
+          required: true
+        - in: path
+          name: cadscript_name
+          description: unique within the organization
+          schema:
+             $ref: "#/components/schemas/CadScriptName"
+          required: true
+      responses:
+        '200':
+          description: a list of avaialable versions for the provided script . Html returns a link list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                   $ref: '#/components/schemas/Cadscript'
+            application/html:
+              schema:
+                $ref: '/components/schemas/HtmlListing'                    
+        '404':
+          description: Script coordinates not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'   
+  /cadscripts/{org}/{cadscript_name}/{cadscript_version}: 
+    get:
+      summary: Get the complete  for a single cadscript and version
+      description: This will return all of the metadata available, including paraemters, executors, and source
+      parameters:
+        - in: path
+          name: org
+          description: organization. typically, top level domain
+          schema:
+            $ref: "#/components/schemas/CadScriptOrg"
+          required: true
+        - in: path
+          name: cadscript_name
+          description: unique within the organization
+          schema:
+             $ref: "#/components/schemas/CadScriptName"
+          required: true
+        - in: path
+          name: cadscript_version
+          description: script version. can't duplicate within the script
+          schema:
+            $ref: "#/components/schemas/CadScriptVersion"
+          required: true         
+      responses:
+        '200':
+          description: a lit of cadscripts. Html returns a link
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cadscript'
+        '404':
+          description: Script coordinates not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'   
+    patch:
+      summary: update a cadscript
+      description: |-
+         Should be used with caution. Most users will expect the source from the same
+         version to remain immutable, so its typically the right answer to post a new version, 
+         not update an existing one.
+      parameters:
+        - in: path
+          name: org
+          description: organization. typically, top level domain
+          schema:
+            $ref: "#/components/schemas/CadScriptOrg"
+          required: true
+        - in: path
+          name: cadscript_name
+          description: unique within the organization
+          schema:
+             $ref: "#/components/schemas/CadScriptName"
+          required: true
+        - in: path
+          name: cadscript_version
+          description: script version. can't duplicate within the script
+          schema:
+            $ref: "#/components/schemas/CadScriptVersion"
+          required: true                
+      security:
+        - BearerAuth: [ write ]      
+      requestBody:
+        description: The new cadscript to add
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Cadscript'
+      responses:
+        '200':
+          description: a list of cadscripts. Html returns a link
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cadscript' 
+        '400':
+          description: Invalid script data provided. ( for example missing fields)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'                
+        '401':
+          description: Not Authorized. If apikey is not provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error' 
+        '404':
+          description: Script coordinates not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'                  
+                
+    delete:
+      summary: delete a cadscript
+      description: |-
+         Should be used with caution. Most users will expect the source from the same
+         version to remain immutable, so its typically the right answer to post a new version, 
+         not update an existing one.
+      parameters:
+        - in: path
+          name: org
+          description: organization. typically, top level domain
+          schema:
+            $ref: "#/components/schemas/CadScriptOrg"
+          required: true
+        - in: path
+          name: cadscript_name
+          description: unique within the organization
+          schema:
+             $ref: "#/components/schemas/CadScriptName"
+          required: true
+        - in: path
+          name: cadscript_version
+          description: script version. can't duplicate within the script
+          schema:
+            $ref: "#/components/schemas/CadScriptVersion"
+          required: true                
+      security:
+        - BearerAuth: [ write ] 
+      responses:
+        '200':
+          description: deleted successfully. the content of the removed cadscript is returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cadscript' 
+        '401':
+          description: Not Authorized. If apikey is not provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'        
+        '404':
+          description: Script coordinates not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'                   
+        
+  /cadscripts/{org}/{cadscript_name}/{cadscript_version}/components:
+    get:
+      summary: List available pre-generated components for the provided cadscript
+      description: Each result is a stored , already computed component produced from the selected script
+      parameters:
+        - in: path
+          name: org
+          description: organization. typically, top level domain
+          schema:
+            $ref: "#/components/schemas/CadScriptOrg"
+          required: true
+        - in: path
+          name: cadscript_name
+          description: unique within the organization
+          schema:
+             $ref: "#/components/schemas/CadScriptName"
+          required: true
+        - in: path
+          name: cadscript_version
+          description: script version. can't duplicate within the script
+          schema:
+            $ref: "#/components/schemas/CadScriptVersion"
+          required: true         
+      responses:
+        '200':
+          description: a list of components that can be fetched for the given script coordinates
+          content:
+            application/json:
+              schema:
+                 type: array
+                 items:
+                   $ref: '#/components/schemas/CadComponent'
+        '404':
+          description: If the provided organization, script, and version do not exist
+    post:
+      summary: upload a component for the provided script
+      description: |-
+        Components are uploaded as a component bundle, which is prescribed by the OCCI spec. 
+        Generally, a component is a zip file containing a component.json file describing the component, 
+        including the paraemters used to build it, together with files in all of the supported output formats,
+        such as STEP, STL, etc. 
+        
+        These files can be rather large. 
+      parameters:
+        - in: path
+          name: org
+          description: organization. typically, top level domain
+          schema:
+            $ref: "#/components/schemas/CadScriptOrg"
+          required: true
+        - in: path
+          name: cadscript_name
+          description: unique within the organization
+          schema:
+             $ref: "#/components/schemas/CadScriptName"
+          required: true
+        - in: path
+          name: cadscript_version
+          description: script version. can't duplicate within the script
+          schema:
+            $ref: "#/components/schemas/CadScriptVersion"
+          required: true                
+      security:
+        - BearerAuth: [ write ]      
+      requestBody:
+        description: The new cadscript to add
+        content:
+          application/gzip:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '200':
+          description: a lit of cadscripts. Html returns a link
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cadscript' 
+        '400':
+          description: Invalid data provided. ( for example missing fields)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'                
+        '401':
+          description: Not Authorized. If apikey is not provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: When the specified compononent already exists for the provided parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'                
+  
+  /cadscripts/{org}/{cadscript_name}/{cadscript_version}/components/{componentId}:
+    delete:
+      summary: delete a component from the server
+      description: |-
+         Should be used with caution. Components are used as a cache, so deleting a component from the
+         server could cause clients to receive a slow response
+      parameters:
+        - in: path
+          name: org
+          description: organization. typically, top level domain
+          schema:
+            $ref: "#/components/schemas/CadScriptOrg"
+          required: true
+        - in: path
+          name: cadscript_name
+          description: unique within the organization
+          schema:
+             $ref: "#/components/schemas/CadScriptName"
+          required: true
+        - in: path
+          name: cadscript_version
+          description: script version. can't duplicate within the script
+          schema:
+            $ref: "#/components/schemas/CadScriptVersion"
+          required: true                
+        - in: path
+          name: componentId
+          description: the component Id to remove from the server
+          schema: 
+            $ref: "#/components/schemas/ComponentId"          
+          required: true
+      security:
+        - BearerAuth: [ write ] 
+      responses:
+        '200':
+          description: deleted successfully. the content of the removed component  is returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CadComponent' 
+        '401':
+          description: Not Authorized. If apikey is not provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'        
+        '404':
+          description: Script coordinates not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'    
+  
+  
+  /cadscripts/{org}/{cadscript_name}/{cadscript_version}/build:  
+    get:
+      summary: Synchronously build a component. 
+      description: |- 
+        This will request generation of a component using the referenced script,
+        and the supplied parameters. 
+        The server will attempt to use cached content if it is available.
+        
+        This version is designed to be used when a client knows render times for the component 
+        will be short, and a single output type is requested
+        
+        Parameters other than those defined here are interpreted as cadscript paraemters,
+        and are provided to the underlying cadscript when it is executed.
+        
+        Upon a successful restult, the return type is depended on the media type requested by the client
+
+        
+      parameters:
+        - in: path
+          name: org
+          description: organization. typically, top level domain
+          schema:
+            $ref: "#/components/schemas/CadScriptOrg"
+          required: true
+        - in: path
+          name: cadscript_name
+          description: unique within the organization
+          schema:
+             $ref: "#/components/schemas/CadScriptName"
+          required: true
+        - in: path
+          name: cadscript_version
+          description: script version. can't duplicate within the script
+          schema:
+            $ref: "#/components/schemas/CadScriptVersion"
+          required: true
+        - in: query
+          name: preset
+          description: render a particular preset that's named in the cadscript
+          schema: 
+            type: string
+            example: large-standard
+          required: false
+        - in: query
+          name: format
+          description: the cad output format requested. only one is allowed
+          schema:
+            $ref: "#/components/schemas/OutputFormat" 
+          required: true
+        - in: header
+          name: requestBody.content.<media-type>
+          description: the format of the data returned.
+          schema: 
+            type: string
+            format: content type
+            example: text/plain
+          required: false
+          
+      security:
+        - BearerAuth: [ build ]
+      responses:
+        '200':
+          description: Successful operation. The content returned is based on the media type requested by the 
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SynchronousBuildResult'
+            text/plain:
+              schema:
+                type: string
+                description: The text output produced by the model, such as STL or STEP
+                format: 3D output
+                example: <STEP OUTPUT> or <STL OUTPUT>
+        '400':
+          description: Invalid request supplied
+        '404':
+          description: Requested org, script and version combination not found
+        '405':
+          description: Parameters invalid or insufficient
+
+  /jobs:
+    get:
+      summary: List all jobs for the specified user, optionally filtering by job status
+      security:
+        - BearerAuth: [ write ]
+      parameters:
+        - in: query
+          name: q_status
+          schema: 
+            type: string
+            description: filter list to jobs with the requested status only
+          required: false
+          
+      responses:
+        '200':
+          description: Job Listing Fetched Successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Job'
+        '401':
+          description: Not Authorized. If apikey is not provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'  
+        '400':
+          description: Invalid script data provided. ( for example missing fields)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error' 
+                
+    post:
+      summary: Request asynchronous generation of a new component
+      description: |-
+         Creates a job that builds a new componet. The request is the same format as
+         the synchronous version build, except that it immediately returns a job
+         structure that can be queried at any time, vs blocking until the result is completed.
+         
+         Most OCCI servers will use the same code to run jobs vs synchronous builds.
+         
+         Jobs are specific to the requesting user. Authorization is required, and
+         the only jobs listed will be those associated with the requesting user
+         
+         use /jobs/{jobId} to check the status of a job after it was started
+         
+      security:
+        - BearerAuth: [ write ]
+      requestBody:
+        description: The new cadscript to add
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuildRequest'
+      responses:
+        '200':
+          description: Job Queued Successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '401':
+          description: Not Authorized. If apikey is not provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'  
+        '400':
+          description: Invalid script data provided. ( for example missing fields)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'     
+
+  /jobs/{jobId}:
+    get:
+      summary: check status for the specified job
+      description: |-
+         WARNING- OCCI servers may not persist jobs across server restarts
+      security:
+        - BearerAuth: [ write ]
+      parameters:
+        - in: path
+          name: jobId
+          schema:
+            $ref: '#/components/schemas/JobId'
+          required: true
+          
+      responses:   
+        '200':
+          description: Job Fetched Successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '401':
+          description: Not Authorized. If apikey is not provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'  
+        '400':
+          description: Invalid script data provided. ( for example missing fields)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'        
+
+components:
+  schemas:
+    CadScriptName:
+      type: string
+      description: name of this cad script. 
+      example: bracket
+    CadScriptVersion:
+      type: string
+      description: version of the script.
+      format: semver
+      example: 1.2.3
+    CadScriptOrg:
+      type: string
+      description: organization for tihs script
+      format: topleveldomain
+      example: mycoolpartsource.com
+    ComponentFormat:
+      type: string
+      enum: [ cadquery, archiyou, openscad]
+      example: cadquery  
+      nullable: false
+    OutputFormat:
+      type: string
+      enum: [ step, stl, gltf ]
+      example: step
+
+    Cadscript:
+      type: object
+      description: a  cadscript. the combination of name, version, and org must be unique
+      properties:
+        name:
+          $ref: "#/components/schemas/CadScriptName"
+        org:
+          $ref: "#/components/schemas/CadScriptOrg"
+        version:
+          $ref: "#/components/schemas/CadScriptVersion"
+        author:
+          type: string
+          description: Author email
+          format: email
+          example: george.burdell@gmail.com
+          nullable: true
+        description:
+          type: string
+          description: Description for this component
+          example: Right Angle bearing bracket
+          nullable: true
+        createDate:
+          type: string
+          format: date-time
+          nullable: false
+        updateDate:
+          type: string
+          format: date-time          
+          nullable: false
+        scriptSource:
+          type: string
+          description: the source code for this script
+          nullable: false
+        sourceLanguage:
+          $ref: '#/components/schemas/ComponentFormat'
+        sourceLanguageVersion:
+          type: string
+          description: the CAD language semver this script requires
+          format: semver
+          example: ^2.0.1
+          nullable: false          
+        componentFormats:
+           type: array
+           items:
+             $ref: '#/components/schemas/ComponentFormat'
+           nullable: false             
+        componentUnits:
+            type: string
+            description: The length unit of measure used for the component
+            enum: [ mm, cm, inch ]           
+            nullable: false          
+        executor:
+            type: string
+            format: url
+            description: url or docker image that can execute this script
+            nullable: false
+        dependencies:
+            type: string
+            description: list of dependencies, in the format used by the executors package manager
+            example: "requests numpy matplotlib"
+        parameters:
+            type: array
+            items:
+              $ref: '#/components/schemas/Parameter'
+        parameter_presets:
+            type: array
+            items:
+              $ref: '#/components/schemas/ParameterPreset'
+
+    ComponentId:
+      type: string
+      example: a8shef
+      description: |-
+          an id for a component. 
+          A Component id is an MD5 hash computed as from the values as follows:
+             script name
+             script version
+             parametername=parametervalue, for each parameter value supplied
+             
+          the paraemters are listed in paraemter name ascending alphabetial order. Only explicitly
+          provided parameters should be listed
+          
+          This allows server to recognize components as identical, even when they were produced
+          on other servers
+      
+    CadComponent:
+      type: object
+      description: A particular generated configuration produced from a CadScript
+      properties:
+        cadScript: 
+          $ref: '#/components/schemas/Cadscript'
+        id:
+          $ref: '#/components/schemas/ComponentId'
+        url: 
+          type: string
+          description: |- 
+             The full url to this component. The file will be a gz file that
+             includes the complete metadata for the script that produced the 
+             component, as well as files for all of the available component formats ( step, stl, etc) 
+          format: URL
+          example: /mydomain/bracket/1.2.3/bracket-a8sdnf.gz
+        parameters:
+          type: array
+          items: 
+            $ref: '#/components/schemas/ParameterValue'
+
+      
+    Error:
+       type: object
+       properties:
+          code: 
+             type: integer
+             description: Error code 
+             nullable: false             
+          message:
+             type: string
+             description: Error Message
+             nullable: false
+             
+    JobId: 
+       type: string
+       format: GUID
+       description: a unique job id
+       nullable: false
+    Job:
+      type: object
+      properties:
+        request_id: 
+          $ref: '#/components/schemas/JobId'
+
+        cadscript:
+           type: string
+           format: url
+           description: A link to the original script
+        status:
+           type: string
+           enum: [ success, running, failed ]
+           description: the state of the job
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time   
+        duration:
+          type: integer
+          description: Job duration, in milliseconds
+          example: 201                    
+        errors:
+           type: array
+           items:
+             $ref: '#/components/schemas/Error' 
+
+    BuildRequest:
+      type: object
+      description: |-
+         A request to generate a customized component.
+         A server will typically attempt to use pre-generated content to satisfy 
+         build requests
+      properties:
+        name:
+          $ref: "#/components/schemas/CadScriptName"
+        org:
+          $ref: "#/components/schemas/CadScriptOrg"
+        version:
+          $ref: "#/components/schemas/CadScriptVersion"
+          
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParameterValue'
+        format:
+          description:  If format is not provided, all formats supported by the cadscript
+          type: array
+          items:
+            $ref: '#/components/schemas/OutputFormat'
+           
+    SynchronousBuildResult:
+      type: object
+      properties:
+        request:
+          $ref: '#/components/schemas/BuildRequest'
+        output:
+          type: string
+          description: Actual 3d model output in the requested format
+          example: <STEP DATA> 
+        output_link:
+          type: string
+          format: URL
+          description: 'The link where the produced component can be downloaded. 
+              The server promises to keep the content for a reasonable amount of time
+              The result will be a link to a component, which contains the original source as well as the outputs'
+          example: /mycooldomain/bracket/1.2_3/components/bracket-a8sdvead.gz
+    
+    Htmllisting:
+      type: string
+      format: html
+      example: <html><ul><li>item 1</li></ul></html>
+      
+    Parameter:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the parameter 
+          example: length
+        type:
+          type: string
+          description: Variable type
+          enum: [ text, number, date-time ]   
+            
+    ParameterValue:
+       type: object
+       properties:
+          name:
+             type: string
+             description: parameter name
+             example: length
+          value:
+             type: string
+             description: the value for this parameter. Must match the paraemter's type
+             example: 10.0
+    ParameterPreset:
+       type: object
+       properties:
+         name:
+            type: string
+            description: the name of the preset
+            example: default
+         values: 
+            type: array
+            description: values for the preset
+            items:
+              $ref: '#/components/schemas/ParameterValue'           
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme:  bearer
+      bearerFormat: JWT 
+     
