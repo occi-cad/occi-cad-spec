@@ -22,6 +22,31 @@ info:
        - list and manage components available that were produced by the script
        - request new components to be generated, both syncrhonously and asynchronously
        
+    OCCI servers make use of an underlying repository format, which is described in detail <here:TODO>.
+    this repository stores components that have already been computed.
+  
+    A complete OCCI implementation will provide server compute resources to build new components as needed, 
+    but a static webserver with access to a repository can be used to provide a read-only repository.
+    
+    GET on these endpoints can be served to a web-browser client ( application/html) using a static webserver:
+    
+        /cadscripts
+        /cadscripts/{org}
+        /cadscripts/{org}/{cadscript_name}/
+        /cadscripts/{org}/{cadscript_name}/{cadscript_version}
+        /cadscripts/{org}/{cadscript_name}/{cadscript_version}/components
+        /cadscripts/{org}/{cadscript_name}/{cadscript_version}/components/{component-componentId}.gz
+        
+    A static webserver will produce a basic file listing.  A dynamic server can render nicer navigation of the repository
+        
+        
+    POST and DELETE on these endpoints, as well as these endpoints for building new components:
+
+        /cadscripts/{org}/{cadscript_name}/{cadscript_version}build
+        /jobs
+        /jobs/{jobId}
+      
+       
   contact:
     email: dave.cowden@gmail.com
   license:
@@ -115,6 +140,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'   
+
+  /cadscripts/{org}: 
+    get:
+      summary: List all cadscripts for the provided organization
+      description: This will return all of the metadata available, including paraemters, executors, and source
+      parameters:
+        - in: path
+          name: org
+          description: organization. typically, top level domain
+          schema:
+            $ref: "#/components/schemas/CadScriptOrg"
+          required: true
+      responses:
+        '200':
+          description: a list of avaialable versions for the provided script . Html returns a link list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                   $ref: '#/components/schemas/Cadscript'
+            application/html:
+              schema:
+                $ref: '/components/schemas/HtmlListing'                    
+        '404':
+          description: Organization not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'   
                 
   /cadscripts/{org}/{cadscript_name}: 
     get:
@@ -151,9 +206,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'   
+                
   /cadscripts/{org}/{cadscript_name}/{cadscript_version}: 
     get:
-      summary: Get the complete  for a single cadscript and version
+      summary: Get a single cadscript and version
       description: This will return all of the metadata available, including paraemters, executors, and source
       parameters:
         - in: path
@@ -858,7 +914,26 @@ components:
     HtmlListing:
       type: string
       format: html
-      example: <html><ul><li>item 1</li></ul></html>
+      description: |-
+           This should be a basic html view listing one row per item. 
+           Components links should point to the component gz file for the component itself, allowing for download via a browser
+      example: |-
+             <html>
+               <table>
+                  <th>
+                      <td>organization</td>
+                      <td>cadscript</td>
+                      <td>Version</td>
+                      <td>component</td>
+                  </th>
+                  <tr>
+                      <td><a href="/cadscripts/brackets.com/">brackets.com</a></td>
+                      <td><a href="/cadscripts/brackets.com/bracket">bracket</a></td>
+                      <td><a href="/cadscripts/brackets.com/bracket/1.1">1.1</td>
+                      <td><a href="/cadscripts/brackets.com/bracket/1.1/bracket-bracket-18afd9a.gz">bracket-18afd9a.gz</td>
+                  </tr>
+               </table>
+             </html>
       
     Parameter:
       type: object
@@ -901,4 +976,3 @@ components:
       type: http
       scheme:  bearer
       bearerFormat: JWT 
-     
