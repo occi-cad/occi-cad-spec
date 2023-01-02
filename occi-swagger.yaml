@@ -45,7 +45,7 @@ paths:
                    $ref: '#/components/schemas/Cadscript'
             application/html:
               schema:
-                $ref: '#/components/schemas/Htmllisting'
+                $ref: '#/components/schemas/HtmlListing'
     post:
       summary: Add a new cadscript to the server
       security:
@@ -108,7 +108,7 @@ paths:
                    $ref: '#/components/schemas/Cadscript'
             application/html:
               schema:
-                $ref: '#/components/schemas/Htmllisting' 
+                $ref: '#/components/schemas/HtmlListing' 
         '400':
           description: Invalid request, if at least one query parameter is not  supplied, OR if any of the parameters are invalid.
           content:
@@ -855,7 +855,7 @@ components:
               The result will be a link to a component, which contains the original source as well as the outputs'
           example: /mycooldomain/bracket/1.2_3/components/bracket-a8sdvead.gz
     
-    Htmllisting:
+    HtmlListing:
       type: string
       format: html
       example: <html><ul><li>item 1</li></ul></html>
