@@ -23,7 +23,7 @@ Very plainly OCCI encompasses these elements:
 3. [occi-freecad-plugin](https://github.com/occi-cad/occi-freecad-plugin) A proof of concept plugin for FreeCAD that can manage OCCI libraries, search and query them for parametric CAD content
 4. [scriptlibrary](https://github.com/occi-cad/scriptlibrary) A growing library of CAD components that we will host on our upcoming official OCCI server
 
-## Example using with FreeCAD plugin
+## Example accessing OCCI library with FreeCAD plugin
 
 https://user-images.githubusercontent.com/12241761/226468462-e7e9589d-f009-4459-903d-97d53dc38bf3.mp4
 
