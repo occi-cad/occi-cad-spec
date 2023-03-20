@@ -23,6 +23,10 @@ Very plainly OCCI encompasses these elements:
 3. [occi-freecad-plugin](https://github.com/occi-cad/occi-freecad-plugin) A proof of concept plugin for FreeCAD that can manage OCCI libraries, search and query them for parametric CAD content
 4. [scriptlibrary](https://github.com/occi-cad/scriptlibrary) A growing library of CAD components that we will host on our upcoming official OCCI server
 
+## Example using with FreeCAD plugin
+
+https://user-images.githubusercontent.com/12241761/226468462-e7e9589d-f009-4459-903d-97d53dc38bf3.mp4
+
 ## Example using the OCCI API
 
 We have a test OCCI server available. Just use these urls in your browser to get parametric CAD content:
@@ -37,10 +41,6 @@ Other examples of OCCI API functionality:
 * [https://occi.archiyou.nl/search?q={{SEARCH_STRING}}](https://occi.archiyou.nl/search?q=box) - Search the OCCI library with a text string and get all scripts
 * [https://occi.archiyou.nl/search](https://occi.archiyou.nl/search?q=box) - Get all scripts in OCCI library
 * [https://occi.archiyou.nl/cqwarehouse/nut/1.0/params](https://occi.archiyou.nl/cqwarehouse/nut/1.0/params) - Get params of version 1.0 of the nut script
-
-## Example using with FreeCAD plugin
-
-Video
 
 ## For whom and contributions
 
