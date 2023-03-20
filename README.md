@@ -4,11 +4,11 @@
 
 Open CAD Components Interface (OCCI) is a way to distribute platform-independent parametric CAD (Computer Aided Design) content on the web. It is powered by open source Script CAD engines like CadQuery (and possibly endless others) that can define parametric CAD models with code instead of clicking. 
 
-## Why OCCI: open source parametric design for all, everywhere
+## Why OCCI: open source parametric CAD for all, everywhere
 
 There is a lot of CAD content available online on public platforms (like GrabCAD, 3D Content Central) or within software ecosystems like Autodesk and OnShape. 
 Most of these models are static and closed source. Which means you can not parametrically change them as an user or view and modify the source of the model as an author. 
-This is because they are designed by drawing in (mostly proprietary software) and then saved as a model in a format which either belongs to that software or a general open format like STEP or STL. In this way most publically available CAD models lose the valuable possibility to be customized. They also hide the logic of their design and show only the outcome. 
+This is because they are designed by drawing in (mostly proprietary) software and then saved as a model in a format which either belongs to that software or a general open format like STEP or STL. In this way most publically available CAD models lose the valuable possibility to be customized. They also hide the logic of their design and show only the outcome. 
 
 Script CAD - like OpenSCAD and CadQuery - can offer an alternative by defining the model with a scripting language that can be easily changed by pre-defined parameters or viewed and altered just as any piece of software. In addition to that, these CAD script engines are open source: which means that your CAD script is fully portable to be run everywhere, for free and that will remain so. 
 
