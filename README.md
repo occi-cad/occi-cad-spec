@@ -21,13 +21,32 @@ Very plainly OCCI encompasses these elements:
 3. [occi-freecad-plugin](https://github.com/occi-cad/occi-freecad-plugin) A proof of concept plugin for FreeCAD that can manage OCCI libraries, search and query them for parametric CAD content
 4. [scriptlibrary](https://github.com/occi-cad/scriptlibrary) A growing library of CAD components that we will host on our upcoming official OCCI server
 
+# Example using the OCCI API
+
+We have a test OCCI server available. Just use these urls in your browser to get parametric CAD content:
+
+* [https://occi.archiyou.nl/cqwarehouse/nut/](https://occi.archiyou.nl/cqwarehouse/nut/) - Get the default nut model in STEP format
+* [https://occi.archiyou.nl/cqwarehouse/nut?SIZE=M1.6-0.35](https://occi.archiyou.nl/cqwarehouse/nut?SIZE=M1.6-0.35) - Get a M6-0.35 nut in STEP format
+* [https://occi.archiyou.nl/cqwarehouse/nut?SIZE=M1.6-0.35&format=stl](https://occi.archiyou.nl/cqwarehouse/nut?SIZE=M1.6-0.35&format=stl) - Get a M6-0.35 nut in STL format
+
+Other examples of OCCI API functionality:
+
+* [https://occi.archiyou.nl/docs](https://occi.archiyou.nl/docs) - Get generated API docs swagger.json
+* [https://occi.archiyou.nl/search?q={{SEARCH_STRING}}](https://occi.archiyou.nl/search?q=box) - Search the OCCI library with a text string and get all scripts
+* [https://occi.archiyou.nl/search](https://occi.archiyou.nl/search?q=box) - Get all scripts in OCCI library
+* [https://occi.archiyou.nl/cqwarehouse/nut/1.0/params](https://occi.archiyou.nl/cqwarehouse/nut/1.0/params) - Get params of version 1.0 of the nut script
+
+# Example using with FreeCAD plugin
+
+Video
+
 # For whom and contributions
 
-* CAD script author: You can publish your CAD content to the web. See occ-server to get started. 
-* CAD content user: To get a sense of how easy it is to get free parametric CAD content inside your favorite CAD software try out the OCCI FreeCAD plugin. 
-* Library contributor: If you have great parametric script CAD content and want to  contribute to our upcoming OCCI library of CAD content please contact us or create an issue in our scriptlibrary repository
+* CAD script author: You can publish your CAD content to the web. See [occi-server](https://github.com/occi-cad/occi-server) to get started. 
+* CAD content user: To get a sense of how easy it is to get free parametric CAD content inside your favorite CAD software try out the [OCCI FreeCAD plugin](https://github.com/occi-cad/occi-freecad-plugin). 
+* Library contributor: If you have great parametric script CAD content and want to contribute to our upcoming OCCI library of CAD content please contact us or create an issue in our scriptlibrary repository
 * Plugin creator: Want to contribute by making an OCCI plugin for your favorite CAD/3D software (like Blender, SolidWorks, OnShape) check out this spec or contact us
-* Online viewer developer: We do like to create a light-weight webviewer on top of the OCCI API. Let us know if you share that interest!
+* Online viewer developer: We like to create a light-weight webviewer on top of the OCCI API. Let us know if you share that interest!
 
 # License
 
