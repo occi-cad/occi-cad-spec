@@ -1,4 +1,4 @@
-# OCCI-CAD-SPEC
+# OCCI Specification
 
 ## Introduction
 
